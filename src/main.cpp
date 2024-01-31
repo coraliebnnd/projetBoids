@@ -1,10 +1,14 @@
 #include <cstdlib>
+#include "glm/fwd.hpp"
 #define DOCTEST_CONFIG_IMPLEMENT
+#include "Boid.hpp"
 #include "doctest/doctest.h"
 #include "p6/p6.h"
 
 int main()
 {
+    Boid boid;
+
     // Run the tests
     if (doctest::Context{}.run() != 0)
         return EXIT_FAILURE;
@@ -15,10 +19,11 @@ int main()
 
     // Declare your infinite update loop.
     ctx.update = [&]() {
+        boid.updatePosition();
         ctx.background(p6::NamedColor::Blue);
         ctx.circle(
-            p6::Center{ctx.mouse()},
-            p6::Radius{0.2f}
+            p6::Center{boid.getPosition()},
+            p6::Radius{0.1f}
         );
     };
 

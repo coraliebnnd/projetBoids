@@ -1,35 +1,42 @@
 #pragma once
 
-template<typename T>
+#include <vector>
+#include "glm/detail/qualifier.hpp"
+#include "glm/glm.hpp"
+
+const int DIMENSION = 2;
+
 class Boid {
 private:
-    T coordX;
-    T coordY;
-    T coordZ;
+    glm::vec<DIMENSION, float> position;
+    glm::vec<DIMENSION, float> direction;
 
 public:
     // default constructor
-    Boid()
-    {
-        coordX = 2;
-    };
+    Boid();
 
     // constructor.s
-    Boid(const T& x, const T& y, const T& z);
+    Boid(glm::vec<DIMENSION, float> newPosition);
 
     // copy constructor
-    Boid(const Boid& b);
+    Boid(const Boid& b)
+        : position(b.position){};
 
     // destructor
-    ~Boid();
+    ~Boid() = default;
 
-    /*METHODS*/
+    //     /*METHODS*/
 
-    // setter
-    void setCoord(const T& x, const T& y, const T& z);
+    //     // setter
+    void setPosition(glm::vec<DIMENSION, float>& newPosition)
+    {
+        position = newPosition;
+    };
 
     // getters
-    T getCoordX() const;
-    T getCoordY() const;
-    T getCoordZ() const;
+    glm::vec<DIMENSION, float> getPosition() const;
+
+    void updatePosition();
+
+    void updateDirection(glm::vec<DIMENSION, float> newDirection);
 };
