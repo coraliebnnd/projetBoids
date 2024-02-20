@@ -22,9 +22,6 @@ public:
     Boid(const Boid& b)
         : position(b.position){};
 
-    // destructor
-    ~Boid() = default;
-
     //     /*METHODS*/
 
     //     // setter
@@ -38,5 +35,5 @@ public:
 
     void updatePosition();
 
-    void updateDirection(glm::vec<DIMENSION, float> newDirection);
+    void updateDirection(glm::vec<DIMENSION, float> force);
 };
