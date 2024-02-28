@@ -4,17 +4,13 @@
 #define DOCTEST_CONFIG_IMPLEMENT
 #include "Boid.hpp"
 #include "Force.hpp"
+#include "GroupBoid.hpp"
 #include "doctest/doctest.h"
 #include "p6/p6.h"
 
-const glm::vec<DIMENSION, float> WALL{1.};
-
 int main()
 {
-    Boid            boid;
-    ForceWall       forceWall;
-    ForceAttraction forceAttraction;
-
+    GroupBoid group;
     // Run the tests
     if (doctest::Context{}.run() != 0)
         return EXIT_FAILURE;
@@ -25,12 +21,20 @@ int main()
 
     // Declare your infinite update loop.
     ctx.update = [&]() {
-        boid.updateDirection(forceWall.calcForce(boid, WALL) + forceAttraction.calcForce(boid, ctx.mouse()));
-        boid.updatePosition();
+        group.moveBoids();
         ctx.background(p6::NamedColor::Blue);
-        ctx.circle(
-            p6::Center{boid.getPosition()},
-            p6::Radius{0.06f}
+        for (Boid& boid : group.getGroup())
+        {
+            ctx.circle(
+                p6::Center{boid.getPosition()},
+                p6::Radius{0.04f}
+            );
+        }
+
+        ctx.fill = {0., 0., 0., 0.};
+        ctx.square(
+            p6::Center{0, 0},
+            p6::Radius{1}
         );
     };
 

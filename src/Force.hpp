@@ -4,18 +4,9 @@
 
 class Force {
 public:
-    virtual glm::vec<DIMENSION, float> calcForce(Boid boid, glm::vec<DIMENSION, float> obstacle) const = 0;
-    virtual ~Force()                                                                                   = default;
-};
-
-class ForceWall : public Force {
-public:
-    ForceWall();
-    glm::vec<DIMENSION, float> calcForce(Boid boid, glm::vec<DIMENSION, float> obstacle) const override;
-};
-
-class ForceAttraction : public Force {
-public:
-    ForceAttraction();
-    glm::vec<DIMENSION, float> calcForce(Boid boid, glm::vec<DIMENSION, float> obstacle) const override;
+    Force();
+    glm::vec<DIMENSION, float> calcForce(Boid boid, Boid otherBoid) const;
+    glm::vec<DIMENSION, float> boidForce(glm::vec<DIMENSION, float> vector, float distance) const;
+    glm::vec<DIMENSION, float> calcForceWall(Boid boid) const;
+    ~Force() = default;
 };
