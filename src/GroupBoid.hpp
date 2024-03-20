@@ -13,8 +13,9 @@ public:
 
     /*METHODS*/
 
-    void              addBoid(Boid&);
-    void              removeBoid(Boid&);
-    void              moveBoids();
-    std::vector<Boid> getGroup();
+    void                       addBoid(Boid&);
+    void                       removeBoid(Boid&);
+    void                       moveBoids(float cohesion, float separation, float forceCohesion, float forceSeparation, float mur, float forceMur, float average, float alignement, float forceAlignement);
+    std::vector<Boid>          getGroup();
+    glm::vec<DIMENSION, float> getAverageDirection();
 };

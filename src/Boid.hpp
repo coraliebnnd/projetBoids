@@ -18,13 +18,6 @@ public:
     // constructor.s
     Boid(glm::vec<DIMENSION, float> newPosition);
 
-    // copy constructor
-    Boid(const Boid& b)
-        : position(b.position){};
-
-    // destructor
-    //~Boid();
-
     //     /*METHODS*/
 
     //     // setter

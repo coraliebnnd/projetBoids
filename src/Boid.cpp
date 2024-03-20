@@ -1,4 +1,5 @@
 #include "Boid.hpp"
+#include <iostream>
 #include <random>
 #include "Force.hpp"
 #include "glm/ext/quaternion_geometric.hpp"
@@ -34,16 +35,19 @@ glm::vec<DIMENSION, float> Boid::getDirection() const
 }
 
 Boid::Boid(const glm::vec<DIMENSION, float> newPosition)
+    : position{newPosition}
 {
-    position = newPosition;
 }
 
 void Boid::updatePosition()
 {
-    position = position + glm::normalize(direction) * 0.005f;
+    std::cout << direction.x << " " << direction.y << "\n";
+    position = position + direction;
 }
 
 void Boid::updateDirection(glm::vec<DIMENSION, float> force)
 {
-    direction += force;
+    direction += force * 0.00001f;
+
+    direction = glm::normalize(direction) * 0.005f;
 }

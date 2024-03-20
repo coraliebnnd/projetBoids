@@ -1,12 +1,17 @@
 #include "Force.hpp"
 #include <cmath>
 #include <cstdlib>
+#include <iostream>
 #include "Boid.hpp"
 #include "glm/detail/qualifier.hpp"
+#include "glm/ext/quaternion_geometric.hpp"
+
+const int coordX = 0;
+const int coordY = 1;
 
 Force::Force() = default;
 
-glm::vec<DIMENSION, float> Force::calcForce(Boid boid, Boid otherBoid) const
+glm::vec<DIMENSION, float> Force::calcForce(Boid boid, Boid otherBoid, float cohesion, float separation, float forceCohesion, float forceSeparation, float mur, float forceMur, float alignement, float forceAlignement, glm::vec<DIMENSION, float> average, int nbrAlignement) const
 {
     glm::vec<DIMENSION, float> force{0.f};
 
@@ -15,54 +20,91 @@ glm::vec<DIMENSION, float> Force::calcForce(Boid boid, Boid otherBoid) const
     // glm::length(vec) -> donne la norme du vecteur vec
     float distance = glm::length(vector);
 
-    if (distance < 1.f)
+    if (boid.getPosition().x < -0)
     {
-        force += otherBoid.getDirection();
+        force += calcForceWall(boid, -1, coordX, mur, forceMur);
+    }
+    else
+    {
+        force += calcForceWall(boid, 1, coordX, mur, forceMur);
     }
 
-    force = calcForceWall(boid);
+    if (boid.getPosition().y < 0)
+    {
+        force += calcForceWall(boid, -1, coordY, mur, forceMur);
+    }
+    else
+    {
+        force += calcForceWall(boid, 1, coordY, mur, forceMur);
+    }
 
-    force += boidForce(vector, distance);
+    if (distance <= cohesion)
+    {
+        force += cohesionForce(vector, distance, cohesion, forceCohesion);
+    }
+
+    if (distance <= separation)
+    {
+        force += separationForce(vector, distance, separation, forceSeparation);
+    }
+
+    if (distance <= alignement)
+    {
+        nbrAlignement = 0;
+        average += otherBoid.getDirection();
+    }
 
     return force;
 };
 
-glm::vec<DIMENSION, float> Force::boidForce(glm::vec<DIMENSION, float> vector, float distance) const
+glm::vec<DIMENSION, float> Force::cohesionForce(glm::vec<DIMENSION, float> vector, float distance, float cohesion, float forceCohesion) const
 {
     glm::vec<DIMENSION, float> force{0.f};
 
-    if (distance < 1. && distance > 0.2)
+    if (cohesion - distance >= 0)
     {
-        force += vector / distance;
+        force += (cohesion - distance) * vector;
     }
 
-    if (distance <= 0.2)
-    {
-        force += -vector / distance;
-    }
-
-    return force * 0.01f;
+    return force * forceCohesion;
 };
 
-glm::vec<DIMENSION, float> Force::calcForceWall(Boid boid) const
+glm::vec<DIMENSION, float> Force::separationForce(glm::vec<DIMENSION, float> vector, float distance, float separation, float forceSeparation) const
 {
-    // mettre sous forme de for
-    double wallDistanceX = 1 - std::abs(boid.getPosition().x);
-    double wallDistanceY = 1 - std::abs(boid.getPosition().y);
+    glm::vec<DIMENSION, float> force{0.f};
 
-    // créer un vec
-    double forceX = 0;
-    double forceY = 0;
-
-    if ((wallDistanceX < 0.2))
+    if (separation - distance >= 0)
     {
-        forceX = -boid.getPosition().x / std::abs(boid.getPosition().x) / wallDistanceX;
+        force += -(separation - distance) * vector / glm::length(vector) / glm::length(vector);
     }
 
-    if ((wallDistanceY < 0.2))
+    return force * forceSeparation;
+};
+
+// glm::vec<DIMENSION, float> Force::alignementForce(glm::vec<DIMENSION, float> vector, float distance, float alignement, float forceAlignement) const
+// {
+//     glm::vec<DIMENSION, float> force{0.f};
+
+//     if (alignement - distance >= 0)
+//     {
+//         force += -(alignement - distance) * vector / glm::length(vector);
+//     }
+
+//     return force * forceAlignement;
+// };
+
+glm::vec<DIMENSION, float> Force::calcForceWall(Boid boid, float posWall, int coord, float mur, float forceMur) const
+{
+    double wallDistance = (posWall - boid.getPosition()[coord]) * posWall;
+    double f            = 0;
+
+    if ((wallDistance < mur))
     {
-        forceY = -boid.getPosition().y / std::abs(boid.getPosition().y) / wallDistanceY;
+        const float x = (mur - wallDistance); // Toujours > 0 car il y a un if au dessus
+        f             = x * x;
     }
 
-    return glm::vec<DIMENSION, float>{forceX, forceY} * 0.005f;
+    glm::vec<DIMENSION, float> force{0.f};
+    force[coord] = -posWall * f;
+    return force * forceMur;
 };
