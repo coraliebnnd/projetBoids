@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.20)
 project(Simple-p6-Setup)
 
 # ---Declare source files---
-file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS src/*)
+file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS src/* src-common/*)
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 target_include_directories(${PROJECT_NAME} PRIVATE src)
 
