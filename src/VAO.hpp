@@ -10,6 +10,7 @@ public:
     VAO();
 
     void bind() const;
+    void set() const;
     void debind() const;
 
     ~VAO();

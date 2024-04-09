@@ -15,8 +15,8 @@ double rand01()
 Boid::Boid()
 {
     // need to make coord random
-    position  = glm::vec<DIMENSION, float>{rand01(), rand01()};
-    direction = glm::vec<DIMENSION, float>{rand01(), rand01()};
+    position  = glm::vec<DIMENSION, float>{rand01(), rand01(), rand01()};
+    direction = glm::vec<DIMENSION, float>{rand01(), rand01(), rand01()};
 };
 
 glm::vec<DIMENSION, float> Boid::getPosition() const
@@ -40,7 +40,7 @@ Boid::Boid(const glm::vec<DIMENSION, float> newPosition)
 
 void Boid::updatePosition()
 {
-    std::cout << direction.x << " " << direction.y << "\n";
+    // std::cout << direction.x << " " << direction.y << "\n";
     position = position + direction;
 }
 
@@ -48,5 +48,5 @@ void Boid::updateDirection(glm::vec<DIMENSION, float> force)
 {
     direction += force * 0.00001f;
 
-    direction = glm::normalize(direction) * 0.005f;
+    direction = glm::normalize(direction) * 0.001f;
 }

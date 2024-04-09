@@ -4,7 +4,7 @@
 #include "glm/detail/qualifier.hpp"
 #include "glm/glm.hpp"
 
-const int DIMENSION = 2;
+const int DIMENSION = 3;
 
 class Boid {
 private:

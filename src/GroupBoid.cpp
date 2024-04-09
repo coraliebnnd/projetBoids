@@ -5,6 +5,7 @@
 
 const int coordX = 0;
 const int coordY = 1;
+const int coordZ = 2;
 
 GroupBoid::GroupBoid()
 {
@@ -57,6 +58,15 @@ void GroupBoid::moveBoids(float cohesion, float separation, float forceCohesion,
             else
             {
                 force += wallForce(boid, 1, coordY, mur, forceMur);
+            }
+
+            if (boid.getPosition().z < 0)
+            {
+                force += wallForce(boid, -1, coordZ, mur, forceMur);
+            }
+            else
+            {
+                force += wallForce(boid, 1, coordZ, mur, forceMur);
             }
 
             if (distance <= cohesion)
