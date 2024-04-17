@@ -10,7 +10,7 @@ public:
     Texture();
 
     void bind() const;
-    void set(img::Image image) const;
+    void set(std::string image) const;
     void debind() const;
 
     ~Texture();

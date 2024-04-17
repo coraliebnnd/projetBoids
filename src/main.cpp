@@ -3,10 +3,12 @@
 #include <cstdlib>
 #include "glm/fwd.hpp"
 #define DOCTEST_CONFIG_IMPLEMENT
+#define TINYOBJLOADER_IMPLEMENTATION
 #include <VAO.hpp>
 #include "../src-common/glimac/TrackballCamera.hpp"
 #include "../src-common/glimac/common.hpp"
 #include "../src-common/glimac/sphere_vertices.hpp"
+#include "../src-common/tiny_obj_loader.h"
 #include "Boid.hpp"
 #include "GroupBoid.hpp"
 #include "VBO.hpp"
@@ -71,12 +73,86 @@ int main()
     // chargement des shaders
     BoidProgram boidProgram{};
 
-    const std::vector<glimac::ShapeVertex> vertices = glimac::sphere_vertices(1, 32, 32);
+    /************ OBJECTS **************/
+    std::string                      inputfile = "../assets/models/jellyfish.obj";
+    tinyobj::attrib_t                attrib;
+    std::vector<tinyobj::shape_t>    shapes;
+    std::vector<tinyobj::material_t> materials;
+
+    std::string warn;
+    std::string err;
+
+    bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, inputfile.c_str());
+
+    if (!warn.empty())
+    {
+        std::cout << warn << std::endl;
+    }
+
+    if (!err.empty())
+    {
+        std::cerr << err << std::endl;
+    }
+
+    if (!ret)
+    {
+        exit(1);
+    }
+
+    std::vector<glimac::ShapeVertex> m_vertices;
+
+    // Loop over shapes
+    for (const auto& shape : shapes)
+    {
+        // Loop over faces(polygon)
+        size_t index_offset = 0;
+        for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++)
+        {
+            size_t fv = size_t(shape.mesh.num_face_vertices[f]);
+
+            // Loop over vertices in the face.
+            for (size_t v = 0; v < fv; v++)
+            {
+                tinyobj::index_t idx = shape.mesh.indices[index_offset + v];
+                // access to vertex
+                glimac::ShapeVertex newVertex = glimac::ShapeVertex{
+
+                    // POSITION
+                    glm::vec3(
+                        tinyobj::real_t(attrib.vertices[3 * size_t(idx.vertex_index) + 0]),
+                        tinyobj::real_t(attrib.vertices[3 * size_t(idx.vertex_index) + 1]),
+                        tinyobj::real_t(attrib.vertices[3 * size_t(idx.vertex_index) + 2])
+                    ),
+                    // NORMAL
+                    glm::vec3(
+                        tinyobj::real_t(attrib.normals[3 * size_t(idx.normal_index) + 0]), // nx
+                        tinyobj::real_t(attrib.normals[3 * size_t(idx.normal_index) + 1]), // ny
+                        tinyobj::real_t(attrib.normals[3 * size_t(idx.normal_index) + 2])  // nz
+                    ),
+                    // TEXTURE_COORDINATES
+                    glm::vec2(
+                        tinyobj::real_t(attrib.texcoords[2 * size_t(idx.texcoord_index) + 0]), // tx
+                        tinyobj::real_t(attrib.texcoords[2 * size_t(idx.texcoord_index) + 1])  // ty
+                    )
+                };
+
+                m_vertices.push_back(newVertex);
+            }
+            index_offset += fv;
+        }
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // const std::vector<glimac::ShapeVertex> vertices = glimac::sphere_vertices(1, 32, 32);
 
     // VBO
     VBO vbo;
     vbo.bind();
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glimac::ShapeVertex), vertices.data(), GL_STATIC_DRAW);
+    // glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glimac::ShapeVertex), vertices.data(), GL_STATIC_DRAW);
+
+    glBufferData(GL_ARRAY_BUFFER, m_vertices.size() * sizeof(glimac::ShapeVertex), m_vertices.data(), GL_STATIC_DRAW);
+
     vbo.debind();
 
     // VAO
@@ -102,7 +178,7 @@ int main()
 
     vao.debind();
 
-    // last position souris
+    // last position mouse
     float lastX = 0;
     float lastY = 0;
 
@@ -157,7 +233,7 @@ int main()
         sliders();
         group.moveBoids(cohesion, separation, forceCohesion, forceSeparation, mur, forceMur, alignement, forceAlignement);
 
-        ctx.background(p6::NamedColor::DarkGray);
+        ctx.background(p6::NamedColor::SmokyBlack);
         for (Boid& boid : group.getGroup())
         {
             /**********MATRICES BOID**********/
@@ -177,7 +253,7 @@ int main()
             glUniformMatrix4fv(boidProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(MVPMatrixBoid));
 
             // draw boid
-            glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+            glDrawArrays(GL_TRIANGLES, 0, m_vertices.size());
         }
 
         vao.debind();
