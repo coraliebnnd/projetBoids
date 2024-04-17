@@ -3,6 +3,7 @@
         "boid",
         "Boids",
         "debind",
-        "glimac"
+        "glimac",
+        "Inputfile"
     ]
 }
