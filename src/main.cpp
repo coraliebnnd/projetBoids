@@ -32,6 +32,7 @@ float alignement      = 0.3f;
 float forceAlignement = 50.f;
 int   nbrBoids        = 40;
 float size            = 0.02f;
+float intensity       = 03.f;
 
 void sliders()
 {
@@ -49,6 +50,7 @@ void sliders()
     ImGui::Begin("Boids");
     ImGui::InputInt("Number of boids wanted", &nbrBoids);
     ImGui::SliderFloat("size", &size, 0.0f, 0.1f);
+    ImGui::SliderFloat("intensity light", &intensity, 0.0f, 5.f);
     ImGui::End();
 }
 
@@ -237,10 +239,6 @@ int main()
 
     vaoDecor.debind();
 
-    /*************** VARIABLES ALEATOIRES ****************/
-
-    int lightOff = bernoulli(0.2);
-
     // last position mouse
     float lastX = 0;
     float lastY = 0;
@@ -258,7 +256,6 @@ int main()
 
             if (lastX != 0 && lastY != 0)
             {
-                // camera autour d'un objet
                 personCamera.rotateLeft(-deltaX * 50.f);
                 personCamera.rotateUp(deltaY * 50.f);
             }
@@ -268,8 +265,8 @@ int main()
         };
 
         glm::vec2 mousePos = ctx.mouse_delta();
-        personCamera.rotateLeft(-mousePos.x * 50.f);
-        personCamera.rotateUp(mousePos.y * 50.f);
+        trackBallCamera.rotateLeft(-mousePos.x * 50.f);
+        trackBallCamera.rotateUp(mousePos.y * 50.f);
 
         if (!ctx.mouse_button_is_pressed(p6::Button::Right))
         {
@@ -305,8 +302,9 @@ int main()
 
         /*** VIEW & PROJ MATRIX ***/
 
-        glm::mat4       viewMatrix = personCamera.getViewMatrix();
-        const glm::mat4 projMatrix = glm::perspective(glm::radians(70.f), ctx.aspect_ratio(), 0.1f, 100.f);
+        glm::mat4       viewMatrixTrackball = trackBallCamera.getViewMatrix();
+        glm::mat4       viewMatrix          = personCamera.getViewMatrix();
+        const glm::mat4 projMatrix          = glm::perspective(glm::radians(70.f), ctx.aspect_ratio(), 0.1f, 100.f);
 
         /******* LIGHTS *******/
 
@@ -321,7 +319,7 @@ int main()
         glUniform3f(uLightIntensityDir, 4.f, 4.f, 1.4f);
 
         // lumière ponctuelle
-        glm::vec4 lightPos{0.f, 0.f, -0.7f, 1.f};
+        glm::vec4 lightPos{0.2f, -0.1f, -0.5f, 1.f};
         glm::vec3 lightPos_vs = glm::vec3(viewMatrix * lightPos);
 
         glUniform3f(uKdPos, 2.f, 2.f, 2.f);
@@ -331,7 +329,7 @@ int main()
         glUniform3f(uLightIntensityPos, 0.8f, 1.f, 1.5f);
 
         // lumière person
-        glm::vec4 lightPerson{0.2, 0., -0.7, 1.};
+        glm::vec4 lightPerson{0.01, 0., -0.2, 1.};
         auto      lightPerson_vs = glm::vec3(lightPerson);
 
         glUniform3f(uKdPerson, 0.2f, 0.2f, 0.2f);
@@ -339,7 +337,7 @@ int main()
         glUniform1f(uShininessPerson, 2.f);
         glUniform3f(uLightPerson_vs, lightPerson_vs.x, lightPerson_vs.y, lightPerson_vs.z);
 
-        glUniform3f(uLightIntensityPerson, 5.f, 5.f, 5.f);
+        glUniform3f(uLightIntensityPerson, intensity, intensity, intensity);
 
         /************ DECOR ************/
 
@@ -402,9 +400,9 @@ int main()
         // matrix model
 
         modelMatrix = glm::inverse(viewMatrix);
-        modelMatrix = glm::translate(modelMatrix, {0., -0.3, -0.5});
+        modelMatrix = glm::translate(modelMatrix, {0., -0.05, -0.12});
         modelMatrix = glm::rotate(modelMatrix, 1.5f, {0., 1., 0.});
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.1f));
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.01f));
 
         // matrix model-vue
         modelViewMatrix = viewMatrix * modelMatrix;

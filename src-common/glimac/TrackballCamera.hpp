@@ -7,7 +7,7 @@
 
 class TrackballCamera {
 private:
-    float m_Distance{5};
+    float m_Distance{0.5};
     float m_AngleX{0};
     float m_AngleY{0};
 
