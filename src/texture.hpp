@@ -11,7 +11,7 @@ public:
 
     void bind() const;
     void set(std::string image) const;
-    void use(GLint uTexture) const;
+    void send(GLint uTexture) const;
     void debind() const;
 
     ~Texture();

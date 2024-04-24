@@ -9,7 +9,7 @@ const int coordZ = 2;
 
 GroupBoid::GroupBoid()
 {
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 50; i++)
     {
         Boid newBoid;
         addBoid(newBoid);
@@ -94,8 +94,17 @@ void GroupBoid::moveBoids(float cohesion, float separation, float forceCohesion,
 
 std::vector<Boid> GroupBoid::getGroup()
 {
-    return group;
-}
+    std::vector<Boid> sortedGroup = group;
+
+    // Tri des boids par distance par rapport à la caméra
+    std::sort(sortedGroup.begin(), sortedGroup.end(), [&](const Boid& a, const Boid& b) {
+        float distanceA = glm::distance(a.getPosition(), {0., 0., 5.});
+        float distanceB = glm::distance(b.getPosition(), {0., 0., 5.});
+        return distanceA > distanceB;
+    });
+
+    return sortedGroup;
+};
 
 glm::vec<DIMENSION, float> GroupBoid::cohesionForce(glm::vec<DIMENSION, float> vector, float distance, float rayonCohesion, float forceCohesion)
 {

@@ -8,14 +8,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "../src-common/tiny_obj_loader.h"
 
-Object::Object()
-    : m_Program(p6::load_shader("../src/shaders/3D.vs.glsl", "../src/shaders/tex3D.fs.glsl"))
-{
-    uMVPMatrix    = glGetUniformLocation(m_Program.id(), "uMVPMatrix");
-    uMVMatrix     = glGetUniformLocation(m_Program.id(), "uMVMatrix");
-    uNormalMatrix = glGetUniformLocation(m_Program.id(), "uNormalMatrix");
-    uTexture      = glGetUniformLocation(m_Program.id(), "uTexture");
-};
+Object::Object() = default;
 
 void Object::setInputfile(std::string filename)
 {
@@ -27,7 +20,7 @@ void Object::load()
     std::string warn;
     std::string err;
 
-    bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, inputfile.c_str());
+    bool ret = tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, inputfile.c_str(), "../assets/models/");
 
     if (!warn.empty())
     {
@@ -86,23 +79,6 @@ void Object::load()
     }
 };
 
-void Object::matrices(glm::mat4 projMatrix, glm::mat4 viewMatrix, glm::vec<DIMENSION, float> position)
-{
-    // matrix model
-    glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), position);
-    modelMatrix           = glm::scale(modelMatrix, glm::vec3(0.01, 0.01, 0.01));
-
-    // matrix model-vue
-    glm::mat4 modelViewMatrix = viewMatrix * modelMatrix;
-
-    // matrix MVP
-    glm::mat4 MVPMatrixBoid = projMatrix * modelViewMatrix;
-
-    glUniformMatrix4fv(uMVMatrix, 1, GL_FALSE, glm::value_ptr(modelViewMatrix));
-    glUniformMatrix4fv(uNormalMatrix, 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(modelViewMatrix))));
-    glUniformMatrix4fv(uMVPMatrix, 1, GL_FALSE, glm::value_ptr(MVPMatrixBoid));
-};
-
 void Object::draw()
 {
     glDrawArrays(GL_TRIANGLES, 0, vertices.size());
@@ -112,13 +88,3 @@ std::vector<glimac::ShapeVertex> Object::getVertices()
 {
     return vertices;
 };
-
-GLint Object::getUTexture()
-{
-    return uTexture;
-}
-
-void Object::use()
-{
-    m_Program.use();
-}

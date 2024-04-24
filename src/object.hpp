@@ -9,13 +9,6 @@
 
 class Object {
 private:
-    p6::Shader m_Program = p6::load_shader("../src/shaders/3D.vs.glsl");
-
-    GLint uMVPMatrix;
-    GLint uMVMatrix;
-    GLint uNormalMatrix;
-    GLint uTexture;
-
     std::string                      inputfile;
     tinyobj::attrib_t                attrib;
     std::vector<tinyobj::shape_t>    shapes;
@@ -25,12 +18,8 @@ private:
 
 public:
     Object();
-
     void                             setInputfile(std::string filename);
     void                             load();
     std::vector<glimac::ShapeVertex> getVertices();
-    GLint                            getUTexture();
-    void                             use();
-    void                             matrices(glm::mat4 projMatrix, glm::mat4 viewMatrix, glm::vec<DIMENSION, float> position);
     void                             draw();
 };
