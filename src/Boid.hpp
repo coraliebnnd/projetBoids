@@ -3,6 +3,7 @@
 #include <vector>
 #include "glm/detail/qualifier.hpp"
 #include "glm/glm.hpp"
+#include "random.hpp"
 
 const int DIMENSION = 3;
 

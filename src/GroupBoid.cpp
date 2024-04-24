@@ -16,13 +16,45 @@ GroupBoid::GroupBoid()
     }
 }
 
+GroupBoid::GroupBoid(int nbrBoid)
+{
+    for (int i = 0; i < nbrBoid; i++)
+    {
+        Boid newBoid;
+        addBoid(newBoid);
+    }
+}
+
 void GroupBoid::addBoid(Boid& boid)
 {
     group.push_back(boid);
 }
 
-void GroupBoid::removeBoid(Boid& boid)
+void GroupBoid::addBoid(int nbr)
 {
+    for (int i = 0; i < nbr; i++)
+    {
+        Boid boid;
+        group.push_back(boid);
+    }
+}
+
+void GroupBoid::removeBoid(int nbr)
+{
+    for (int i = 0; i < nbr; i++)
+    {
+        group.pop_back();
+    }
+}
+
+int GroupBoid::getSize()
+{
+    int size = 0;
+    for (Boid& boid : group)
+    {
+        size++;
+    }
+    return size;
 }
 
 void GroupBoid::moveBoids(float cohesion, float separation, float forceCohesion, float forceSeparation, float mur, float forceMur, float alignement, float forceAlignement)

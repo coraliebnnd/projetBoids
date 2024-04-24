@@ -32,11 +32,13 @@ public:
     void moveLeft(float t)
     {
         m_position += t * m_LeftVector;
+        replaceCamera();
     }
 
     void moveFront(float t)
     {
         m_position += t * m_FrontVector;
+        replaceCamera();
     }
 
     void rotateLeft(float degrees)
@@ -54,5 +56,35 @@ public:
     glm::mat4 getViewMatrix() const
     {
         return glm::lookAt(m_position, m_position + m_FrontVector, m_UpVector);
+    }
+
+    void replaceCamera()
+    {
+        if (m_position.x < -1.f)
+        {
+            m_position.x = -.9f;
+        }
+        if (m_position.x > 1.f)
+        {
+            m_position.x = .9f;
+        }
+
+        if (m_position.y < -1.f)
+        {
+            m_position.y = -.9f;
+        }
+        if (m_position.y > 1.f)
+        {
+            m_position.y = .9f;
+        }
+
+        if (m_position.z < -1.f)
+        {
+            m_position.z = -.9f;
+        }
+        if (m_position.z > 1.f)
+        {
+            m_position.z = .9f;
+        }
     }
 };
