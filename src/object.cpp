@@ -15,6 +15,21 @@ void Object::setInputfile(std::string filename)
     inputfile = "../assets/models/" + filename + ".obj";
 };
 
+void Object::set(VBO& vbo)
+{
+    glEnableVertexAttribArray(vertex_attr_position);
+    glEnableVertexAttribArray(vertex_attr_normal);
+    glEnableVertexAttribArray(vertex_attr_texCoords);
+
+    vbo.bind();
+
+    glVertexAttribPointer(vertex_attr_position, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, position)));
+    glVertexAttribPointer(vertex_attr_normal, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, normal)));
+    glVertexAttribPointer(vertex_attr_texCoords, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, texCoords)));
+
+    vbo.debind();
+}
+
 void Object::load()
 {
     std::string warn;

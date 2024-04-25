@@ -47,7 +47,10 @@ vec3 blinnPhongDir(vec3 uLightDir_vs, vec3 uKd, vec3 uKs, float uShininess, vec3
 vec3 blinnPhongPos(vec3 uLightPos_vs, vec3 uKd, vec3 uKs, float uShininess, vec3 uLightIntensity){
     vec3 normalNormalise = normalize(vNormal_vs);
     float d = distance(uLightPos_vs,vPosition_vs);
-    vec3 LightIntensity = uLightIntensity / (d * d);
+    if(d>= 1){
+        d = 1;
+    }
+    vec3 LightIntensity = uLightIntensity / d;
 
     vec3 lightPos = normalize(uLightPos_vs - vPosition_vs); // Direction incidente de la lumiÃ¨re
     vec3 halfVector = normalize(lightPos + normalize(-vPosition_vs)); // Vecteur halfVector

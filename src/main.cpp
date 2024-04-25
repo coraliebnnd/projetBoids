@@ -2,6 +2,7 @@
 #include <math.h>
 #include <cstddef>
 #include <cstdlib>
+#include <iostream>
 #include "glm/fwd.hpp"
 #include "texture.hpp"
 #define DOCTEST_CONFIG_IMPLEMENT
@@ -33,6 +34,7 @@ float forceAlignement = 50.f;
 int   nbrBoids        = 40;
 float size            = 0.02f;
 float intensity       = 03.f;
+bool  LOD             = false;
 
 void sliders()
 {
@@ -49,6 +51,7 @@ void sliders()
 
     ImGui::Begin("Boids");
     ImGui::InputInt("Number of boids wanted", &nbrBoids);
+    ImGui::Checkbox("Activer/Désactiver LOD", &LOD);
     ImGui::SliderFloat("size", &size, 0.0f, 0.1f);
     ImGui::SliderFloat("intensity light", &intensity, 0.0f, 5.f);
     ImGui::End();
@@ -69,7 +72,7 @@ int main()
     TrackballCamera trackBallCamera;
     FreeFlyCamera   personCamera;
 
-    /************ SHADER ************/
+    /************* SHADER **************/
     const p6::Shader shader = p6::load_shader(
         "../src/shaders/3D.vs.glsl",
         "../src/shaders/tex3D.fs.glsl"
@@ -99,6 +102,10 @@ int main()
     Object decor;
     decor.setInputfile("decor");
     decor.load();
+
+    Object lowBoid;
+    lowBoid.setInputfile("jellyfishLowPoly");
+    lowBoid.load();
 
     /************ TEXTURE **************/
     Texture textureBoid;
@@ -165,79 +172,36 @@ int main()
     vboDecor.sendData(decor.getVertices());
     vboDecor.debind();
 
+    VBO vboLowBoid;
+    vboLowBoid.bind();
+    vboLowBoid.sendData(lowBoid.getVertices());
+    vboLowBoid.debind();
+
     // VAO
-
-    static constexpr GLuint vertex_attr_position  = 0;
-    static constexpr GLuint vertex_attr_normal    = 1;
-    static constexpr GLuint vertex_attr_texCoords = 2;
-
     VAO vaoBoid;
     vaoBoid.bind();
-
-    glEnableVertexAttribArray(vertex_attr_position);
-    glEnableVertexAttribArray(vertex_attr_normal);
-    glEnableVertexAttribArray(vertex_attr_texCoords);
-
-    vboBoid.bind();
-
-    glVertexAttribPointer(vertex_attr_position, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, position)));
-    glVertexAttribPointer(vertex_attr_normal, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, normal)));
-    glVertexAttribPointer(vertex_attr_texCoords, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, texCoords)));
-
-    vboBoid.debind();
-
+    objBoid.set(vboBoid);
     vaoBoid.debind();
 
     VAO vaoCube;
     vaoCube.bind();
-
-    glEnableVertexAttribArray(vertex_attr_position);
-    glEnableVertexAttribArray(vertex_attr_normal);
-    glEnableVertexAttribArray(vertex_attr_texCoords);
-
-    vboCube.bind();
-
-    glVertexAttribPointer(vertex_attr_position, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, position)));
-    glVertexAttribPointer(vertex_attr_normal, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, normal)));
-    glVertexAttribPointer(vertex_attr_texCoords, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, texCoords)));
-
-    vboCube.debind();
-
+    cube.set(vboCube);
     vaoCube.debind();
 
     VAO vaoPerson;
     vaoPerson.bind();
-
-    glEnableVertexAttribArray(vertex_attr_position);
-    glEnableVertexAttribArray(vertex_attr_normal);
-    glEnableVertexAttribArray(vertex_attr_texCoords);
-
-    vboPerson.bind();
-
-    glVertexAttribPointer(vertex_attr_position, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, position)));
-    glVertexAttribPointer(vertex_attr_normal, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, normal)));
-    glVertexAttribPointer(vertex_attr_texCoords, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, texCoords)));
-
-    vboPerson.debind();
-
+    person.set(vboPerson);
     vaoPerson.debind();
 
     VAO vaoDecor;
     vaoDecor.bind();
-
-    glEnableVertexAttribArray(vertex_attr_position);
-    glEnableVertexAttribArray(vertex_attr_normal);
-    glEnableVertexAttribArray(vertex_attr_texCoords);
-
-    vboDecor.bind();
-
-    glVertexAttribPointer(vertex_attr_position, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, position)));
-    glVertexAttribPointer(vertex_attr_normal, 3, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, normal)));
-    glVertexAttribPointer(vertex_attr_texCoords, 2, GL_FLOAT, GL_FALSE, sizeof(glimac::ShapeVertex), (const GLvoid*)(offsetof(glimac::ShapeVertex, texCoords)));
-
-    vboDecor.debind();
-
+    decor.set(vboDecor);
     vaoDecor.debind();
+
+    VAO vaoLowBoid;
+    vaoLowBoid.bind();
+    lowBoid.set(vboLowBoid);
+    vaoLowBoid.debind();
 
     // last position mouse
     float lastX = 0;
@@ -419,6 +383,7 @@ int main()
         vaoPerson.debind();
 
         /*********** BOIDS *************/
+
         int length = group.getSize();
         if (nbrBoids > length)
         {
@@ -430,7 +395,15 @@ int main()
             group.removeBoid(1);
         }
 
-        vaoBoid.bind();
+        std::cout << LOD << std::endl;
+        if (LOD)
+        {
+            vaoLowBoid.bind();
+        }
+        else
+        {
+            vaoBoid.bind();
+        };
 
         textureBoid.send(uTexture);
         textureBoid.bind();
@@ -456,12 +429,25 @@ int main()
             glUniformMatrix4fv(uMVPMatrix, 1, GL_FALSE, glm::value_ptr(MVPMatrix));
 
             // draw boid
-            objBoid.draw();
+            if (LOD)
+            {
+                lowBoid.draw();
+            }
+            else
+            {
+                objBoid.draw();
+            };
         }
 
-        vaoBoid.debind();
+        if (LOD)
+        {
+            vaoLowBoid.debind();
+        }
+        else
+        {
+            vaoBoid.debind();
+        }
     };
-
     // Should be done last. It starts the infinite loop.
     ctx.start();
 }
