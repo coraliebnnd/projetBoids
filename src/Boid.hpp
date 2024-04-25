@@ -9,15 +9,16 @@ const int DIMENSION = 3;
 
 class Boid {
 private:
-    glm::vec<DIMENSION, float> position;
-    glm::vec<DIMENSION, float> direction;
+    glm::vec<DIMENSION, float> position{1.};
+    glm::vec<DIMENSION, float> direction{1.};
+    float                      size = 0.01;
 
 public:
     // default constructor
     Boid();
 
     // constructor.s
-    Boid(glm::vec<DIMENSION, float> newPosition);
+    explicit Boid(glm::vec<DIMENSION, float> newPosition);
 
     //     /*METHODS*/
 
@@ -26,10 +27,12 @@ public:
     {
         position = newPosition;
     };
+    void setSize(float newSize);
 
     // getters
     glm::vec<DIMENSION, float> getPosition() const;
     glm::vec<DIMENSION, float> getDirection() const;
+    float                      getSize() const;
 
     void updatePosition();
 

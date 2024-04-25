@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdlib>
 #include <iostream>
+#include <vector>
 #include "glm/fwd.hpp"
 #include "texture.hpp"
 #define DOCTEST_CONFIG_IMPLEMENT
@@ -31,9 +32,9 @@ float mur             = 0.2f;
 float forceMur        = 1.f;
 float alignement      = 0.3f;
 float forceAlignement = 50.f;
-int   nbrBoids        = 40;
+int   nbrBoids        = poissonRandom(40);
 float size            = 0.02f;
-float intensity       = 03.f;
+float intensity       = 5.f;
 bool  LOD             = false;
 
 void sliders()
@@ -53,7 +54,7 @@ void sliders()
     ImGui::InputInt("Number of boids wanted", &nbrBoids);
     ImGui::Checkbox("Activer/Désactiver LOD", &LOD);
     ImGui::SliderFloat("size", &size, 0.0f, 0.1f);
-    ImGui::SliderFloat("intensity light", &intensity, 0.0f, 5.f);
+    ImGui::SliderFloat("intensity light", &intensity, 0.0f, 10.f);
     ImGui::End();
 }
 
@@ -68,10 +69,6 @@ int main()
     auto ctx = p6::Context{{.title = "Simple-p6-Setup"}};
     ctx.maximize_window();
 
-    /************ CAMERA ***************/
-    TrackballCamera trackBallCamera;
-    FreeFlyCamera   personCamera;
-
     /************* SHADER **************/
     const p6::Shader shader = p6::load_shader(
         "../src/shaders/3D.vs.glsl",
@@ -79,6 +76,23 @@ int main()
     );
 
     shader.use();
+
+    /*********** VARIABLES **************/
+    std::vector<float> bernoulli = generateBernoulliSchema(0.7, 3);
+    glm::vec3          bernoulliVec3(bernoulli[0], bernoulli[1], bernoulli[2]);
+
+    std::vector<float> hyperGeo = generateHyperGeometric(20, 3, 15);
+
+    double expVar = generateExponential(0.0001);
+
+    glm::mat3 markovMatrix{glm::vec3{.7f, .6f, .0f}, glm::vec3{.3f, .3f, .7f}, glm::vec3{.0f, .1f, .3f}};
+    glm::vec3 currentState{1.f, 0.f, 0.f};
+
+    /************ CAMERA ***************/
+    TrackballCamera trackBallCamera;
+    FreeFlyCamera   personCamera;
+    personCamera.moveFront(-geometricTrial(0.3));
+    personCamera.moveLeft(-geometricTrial(0.2));
 
     /************ OBJECTS **************/
     GLint uMVPMatrix    = glGetUniformLocation(shader.id(), "uMVPMatrix");
@@ -113,6 +127,11 @@ int main()
     textureBoid.set("jellyfishText");
     textureBoid.debind();
 
+    Texture textureLowBoid;
+    textureLowBoid.bind();
+    textureLowBoid.set("textureLow");
+    textureLowBoid.debind();
+
     Texture textureCube;
     textureCube.bind();
     textureBoid.set("cube");
@@ -121,10 +140,22 @@ int main()
     Texture texturePerson;
     texturePerson.bind();
     texturePerson.set("HKText");
+    texturePerson.debind();
 
-    Texture textureDecor;
-    textureDecor.bind();
-    textureDecor.set("textureDecor");
+    Texture textureDecorB;
+    textureDecorB.bind();
+    textureDecorB.set("textureDecor");
+    textureDecorB.debind();
+
+    Texture textureDecor0;
+    textureDecor0.bind();
+    textureDecor0.set("textureDecorOrange");
+    textureDecor0.debind();
+
+    Texture textureDecorG;
+    textureDecorG.bind();
+    textureDecorG.set("textureDecorGrey");
+    textureDecorG.debind();
 
     /************* LIGHTS **************/
 
@@ -207,11 +238,31 @@ int main()
     float lastX = 0;
     float lastY = 0;
 
+    // angle perso
+    float angle = 1.5;
+
+    int       frame = 0;
+    int       count = 0;
+    glm::vec3 colorLight{0.};
+
+    glm::vec3 sizePerson{0.02};
+
     // Declare your infinite update loop.
     ctx.update = [&]() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         ctx.background(p6::hex(000513));
+
+        count++;
+        std::cout << count << std::endl;
+
+        frame++;
+        frame = frame % 1000;
+
+        if (count >= expVar)
+        {
+            sizePerson = {0.01, 0.01, 0.01};
+        }
 
         /************ CAMERA ***************/
         ctx.mouse_dragged = [&](p6::MouseDrag drag) {
@@ -221,6 +272,7 @@ int main()
             if (lastX != 0 && lastY != 0)
             {
                 personCamera.rotateLeft(-deltaX * 50.f);
+                angle += deltaX;
                 personCamera.rotateUp(deltaY * 50.f);
             }
 
@@ -247,21 +299,25 @@ int main()
         if (ctx.key_is_pressed(GLFW_KEY_W))
         {
             personCamera.moveFront(0.01f);
+            angle = 1.5;
         }
         // gauche
         if (ctx.key_is_pressed(GLFW_KEY_A))
         {
             personCamera.moveLeft(0.01f);
+            angle = 3;
         }
         // reculer
         if (ctx.key_is_pressed(GLFW_KEY_S))
         {
             personCamera.moveFront(-0.01f);
+            angle = -1.5;
         }
         // droite
         if (ctx.key_is_pressed(GLFW_KEY_D))
         {
             personCamera.moveLeft(-0.01f);
+            angle = 0;
         }
 
         /*** VIEW & PROJ MATRIX ***/
@@ -273,24 +329,27 @@ int main()
         /******* LIGHTS *******/
 
         // lumière directionnelle
-        glm::vec4 lightDir{1.f, 1.f, 1.f, 0.f};
+        glm::vec4 lightDir{hyperGeo[0], hyperGeo[1], hyperGeo[2], 0.f};
         glm::vec3 lightDir_vs = glm::vec3(viewMatrix * lightDir);
 
         glUniform3f(uKdDir, 0.f, 0.f, 0.f);
         glUniform3f(uKsDir, 2.f, 2.f, 2.f);
         glUniform1f(uShininessDir, 4.f);
         glUniform3f(uLightDir_vs, lightDir_vs.x, lightDir_vs.y, lightDir_vs.z);
-        glUniform3f(uLightIntensityDir, 4.f, 4.f, 1.4f);
+
+        glm::vec3 intensityDir    = {4.f, 4.f, 1.4f};
+        glm::vec3 resultIntensity = intensityDir * bernoulliVec3;
+        glUniform3f(uLightIntensityDir, resultIntensity.x, resultIntensity.y, resultIntensity.z);
 
         // lumière ponctuelle
-        glm::vec4 lightPos{0.2f, -0.1f, -0.5f, 1.f};
+        glm::vec4 lightPos{0.2f, -0.3f, -0.3f, 1.f};
         glm::vec3 lightPos_vs = glm::vec3(viewMatrix * lightPos);
 
-        glUniform3f(uKdPos, 2.f, 2.f, 2.f);
-        glUniform3f(uKsPos, 2.f, 2.f, 2.f);
+        glUniform3f(uKdPos, colorLight.x, colorLight.y, colorLight.z);
+        glUniform3f(uKsPos, colorLight.x, colorLight.y, colorLight.z);
         glUniform1f(uShininessPos, 5.f);
         glUniform3f(uLightPos_vs, lightPos_vs.x, lightPos_vs.y, lightPos_vs.z);
-        glUniform3f(uLightIntensityPos, 0.8f, 1.f, 1.5f);
+        glUniform3f(uLightIntensityPos, colorLight.x, colorLight.y, colorLight.z);
 
         // lumière person
         glm::vec4 lightPerson{0.01, 0., -0.2, 1.};
@@ -307,8 +366,31 @@ int main()
 
         vaoDecor.bind();
 
-        textureDecor.send(uTexture);
-        textureDecor.bind();
+        if (frame == 10)
+        {
+            calculateMarkovState(currentState, markovMatrix);
+        }
+
+        if (currentState[0])
+        {
+            textureDecorB.send(uTexture);
+            textureDecorB.bind();
+            colorLight = {0.294, 1.f, 1.f};
+        }
+
+        if (currentState[1])
+        {
+            textureDecor0.send(uTexture);
+            textureDecor0.bind();
+            colorLight = {1.f, 0.631, 0};
+        }
+
+        if (currentState[2])
+        {
+            textureDecorG.send(uTexture);
+            textureDecorG.bind();
+            colorLight = {0.f, 0.f, 0.f};
+        }
 
         // matrix model
         glm::mat4 modelMatrix = glm::translate(glm::mat4{1.}, {0., -1., -0.});
@@ -365,8 +447,8 @@ int main()
 
         modelMatrix = glm::inverse(viewMatrix);
         modelMatrix = glm::translate(modelMatrix, {0., -0.05, -0.12});
-        modelMatrix = glm::rotate(modelMatrix, 1.5f, {0., 1., 0.});
-        modelMatrix = glm::scale(modelMatrix, glm::vec3(0.01f));
+        modelMatrix = glm::rotate(modelMatrix, angle, {0., 1., 0.});
+        modelMatrix = glm::scale(modelMatrix, sizePerson);
 
         // matrix model-vue
         modelViewMatrix = viewMatrix * modelMatrix;
@@ -395,18 +477,18 @@ int main()
             group.removeBoid(1);
         }
 
-        std::cout << LOD << std::endl;
         if (LOD)
         {
             vaoLowBoid.bind();
+            textureLowBoid.send(uTexture);
+            textureLowBoid.bind();
         }
         else
         {
             vaoBoid.bind();
+            textureBoid.send(uTexture);
+            textureBoid.bind();
         };
-
-        textureBoid.send(uTexture);
-        textureBoid.bind();
 
         sliders();
         group.moveBoids(cohesion, separation, forceCohesion, forceSeparation, mur, forceMur, alignement, forceAlignement);
@@ -416,7 +498,7 @@ int main()
             /**********MATRICES BOID**********/
             // matrix model
             glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), boid.getPosition());
-            modelMatrix           = glm::scale(modelMatrix, glm::vec3(size));
+            modelMatrix           = glm::scale(modelMatrix, glm::vec3(size + boid.getSize()));
 
             // matrix model-vue
             glm::mat4 modelViewMatrix = viewMatrix * modelMatrix;
